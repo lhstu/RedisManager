@@ -1,0 +1,90 @@
+.root {
+    -fx-font-family: "PingFang SC", "Microsoft YaHei", sans-serif;
+}
+
+.app-root {
+    -fx-background-color: linear-gradient(to bottom, #f5f1e8, #efe7d8);
+}
+
+.main-toolbar {
+    -fx-background-color: #17324d;
+    -fx-padding: 10 16 10 16;
+}
+
+.main-toolbar .label {
+    -fx-text-fill: #f8f2e7;
+}
+
+.main-toolbar .text-field {
+    -fx-background-radius: 10;
+    -fx-background-color: #f8f2e7;
+}
+
+.main-toolbar .button {
+    -fx-background-color: #c96d3b;
+    -fx-text-fill: white;
+    -fx-background-radius: 10;
+}
+
+.app-title {
+    -fx-font-size: 22px;
+    -fx-font-weight: bold;
+}
+
+.section-title {
+    -fx-font-size: 15px;
+    -fx-font-weight: bold;
+    -fx-text-fill: #17324d;
+}
+
+.subsection-title {
+    -fx-font-size: 12px;
+    -fx-font-weight: bold;
+    -fx-text-fill: #7b4d2f;
+}
+
+.muted-label {
+    -fx-text-fill: #5d6875;
+}
+
+.content-panel {
+    -fx-background-color: rgba(255, 251, 245, 0.88);
+    -fx-background-radius: 16;
+    -fx-border-color: rgba(23, 50, 77, 0.08);
+    -fx-border-radius: 16;
+}
+
+.content-panel .tool-bar {
+    -fx-background-color: transparent;
+    -fx-padding: 0;
+}
+
+.content-panel .button {
+    -fx-background-color: #2f587b;
+    -fx-text-fill: white;
+    -fx-background-radius: 10;
+}
+
+.console-pane {
+    -fx-background-color: #102235;
+}
+
+.console-pane .label {
+    -fx-text-fill: #f5ede2;
+}
+
+.console-pane .text-area,
+.console-pane .text-field {
+    -fx-background-radius: 10;
+    -fx-background-color: #f4efe6;
+}
+
+.status-bar {
+    -fx-background-color: #0e1d2c;
+    -fx-padding: 6 16 6 16;
+}
+
+.status-label {
+    -fx-text-fill: #e8dcc9;
+    -fx-font-size: 12px;
+}

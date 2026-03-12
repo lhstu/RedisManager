@@ -1,0 +1,134 @@
+name: Release
+
+on:
+  push:
+    tags:
+      - 'v*'
+
+permissions:
+  contents: write
+
+jobs:
+  package:
+    name: Package (${{ matrix.label }})
+    runs-on: ${{ matrix.os }}
+    strategy:
+      fail-fast: false
+      matrix:
+        include:
+          - os: macos-latest
+            label: macos
+            installer_type: dmg
+            artifact_glob: build/packaging/installer/*.dmg
+          - os: ubuntu-latest
+            label: linux
+            installer_type: deb
+            artifact_glob: build/packaging/installer/*.deb
+          - os: windows-latest
+            label: windows
+            installer_type: msi
+            artifact_glob: build/packaging/installer/*.msi
+
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Setup Java 17
+        uses: actions/setup-java@v4
+        with:
+          distribution: temurin
+          java-version: '17'
+          cache: gradle
+
+      - name: Setup Gradle
+        uses: gradle/actions/setup-gradle@v4
+
+      - name: Install Linux packaging dependencies
+        if: runner.os == 'Linux'
+        run: |
+          sudo apt-get update
+          sudo apt-get install -y fakeroot
+
+      - name: Install WiX Toolset
+        if: runner.os == 'Windows'
+        shell: pwsh
+        run: choco install wixtoolset --no-progress -y
+
+      - name: Generate icons
+        if: runner.os != 'Windows'
+        run: ./scripts/generate-icons.sh
+
+      - name: Import Apple signing certificate
+        if: runner.os == 'macOS' && secrets.APPLE_CERTIFICATE_P12 != ''
+        env:
+          APPLE_CERTIFICATE_P12: ${{ secrets.APPLE_CERTIFICATE_P12 }}
+          APPLE_CERTIFICATE_PASSWORD: ${{ secrets.APPLE_CERTIFICATE_PASSWORD }}
+          BUILD_KEYCHAIN_PASSWORD: ${{ secrets.BUILD_KEYCHAIN_PASSWORD }}
+        run: |
+          CERT_PATH="$RUNNER_TEMP/signing-cert.p12"
+          KEYCHAIN_PATH="$RUNNER_TEMP/build-signing.keychain-db"
+          echo "$APPLE_CERTIFICATE_P12" | base64 --decode > "$CERT_PATH"
+          security create-keychain -p "$BUILD_KEYCHAIN_PASSWORD" "$KEYCHAIN_PATH"
+          security set-keychain-settings -lut 21600 "$KEYCHAIN_PATH"
+          security unlock-keychain -p "$BUILD_KEYCHAIN_PASSWORD" "$KEYCHAIN_PATH"
+          security import "$CERT_PATH" -P "$APPLE_CERTIFICATE_PASSWORD" -A -t cert -f pkcs12 -k "$KEYCHAIN_PATH"
+          security set-key-partition-list -S apple-tool:,apple:,codesign: -s -k "$BUILD_KEYCHAIN_PASSWORD" "$KEYCHAIN_PATH"
+          security list-keychains -d user -s "$KEYCHAIN_PATH" login.keychain-db
+          echo "REDISMANAGER_MAC_SIGN_KEYCHAIN=$KEYCHAIN_PATH" >> "$GITHUB_ENV"
+
+      - name: Build macOS release
+        if: runner.os == 'macOS'
+        env:
+          REDISMANAGER_MAC_SIGN_IDENTITY: ${{ secrets.REDISMANAGER_MAC_SIGN_IDENTITY }}
+          REDISMANAGER_MAC_SIGN_KEYCHAIN: ${{ env.REDISMANAGER_MAC_SIGN_KEYCHAIN || secrets.REDISMANAGER_MAC_SIGN_KEYCHAIN }}
+          APPLE_ID: ${{ secrets.APPLE_ID }}
+          TEAM_ID: ${{ secrets.TEAM_ID }}
+          APP_PASSWORD: ${{ secrets.APP_PASSWORD }}
+          APPLE_KEYCHAIN_PROFILE: ${{ secrets.APPLE_KEYCHAIN_PROFILE }}
+          NOTARIZE: ${{ secrets.APPLE_ID != '' || secrets.APPLE_KEYCHAIN_PROFILE != '' }}
+        run: ./scripts/release-macos.sh "${GITHUB_REF_NAME#v}"
+
+      - name: Build release on Unix
+        if: runner.os == 'Linux'
+        run: ./scripts/package-current-platform.sh "${GITHUB_REF_NAME#v}" "${{ matrix.installer_type }}"
+
+      - name: Build release on Windows
+        if: runner.os == 'Windows'
+        shell: pwsh
+        run: .\gradlew.bat --no-daemon clean test packageInstallerCurrentPlatform writeReleaseChecksums "-PreleaseVersion=$($env:GITHUB_REF_NAME.Substring(1))" "-PinstallerType=${{ matrix.installer_type }}"
+
+      - name: Upload packaged artifacts
+        uses: actions/upload-artifact@v4
+        with:
+          name: ${{ matrix.label }}-artifacts
+          path: |
+            ${{ matrix.artifact_glob }}
+            build/packaging/installer/SHA256SUMS.txt
+
+  github-release:
+    name: Publish GitHub Release
+    runs-on: ubuntu-latest
+    needs: package
+
+    steps:
+      - name: Download build artifacts
+        uses: actions/download-artifact@v4
+        with:
+          path: dist
+
+      - name: Flatten artifacts
+        run: |
+          mkdir -p release
+          find dist -type f ! -name 'SHA256SUMS.txt' -exec cp {} release/ \;
+
+      - name: Write combined checksums
+        run: |
+          cd release
+          sha256sum * > SHA256SUMS.txt
+
+      - name: Publish release
+        uses: softprops/action-gh-release@v2
+        with:
+          files: |
+            release/*
+          generate_release_notes: true

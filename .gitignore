@@ -1,0 +1,9 @@
+.DS_Store
+.gradle/
+.gradle-user-home/
+build/
+out/
+
+*.log
+
+packaging/common/release.env

@@ -1,0 +1,23 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 1024 1024">
+  <defs>
+    <linearGradient id="bg" x1="0%" x2="100%" y1="0%" y2="100%">
+      <stop offset="0%" stop-color="#16324b"/>
+      <stop offset="100%" stop-color="#2b5a7b"/>
+    </linearGradient>
+    <linearGradient id="accent" x1="0%" x2="100%" y1="0%" y2="100%">
+      <stop offset="0%" stop-color="#efb24b"/>
+      <stop offset="100%" stop-color="#d06c3b"/>
+    </linearGradient>
+  </defs>
+  <rect width="1024" height="1024" rx="220" fill="url(#bg)"/>
+  <rect x="168" y="220" width="688" height="584" rx="92" fill="#f4efe6"/>
+  <rect x="208" y="268" width="608" height="108" rx="54" fill="url(#accent)"/>
+  <circle cx="272" cy="322" r="18" fill="#f4efe6"/>
+  <circle cx="336" cy="322" r="18" fill="#f4efe6"/>
+  <circle cx="400" cy="322" r="18" fill="#f4efe6"/>
+  <path d="M286 500c0-48 38-86 86-86h160c105 0 190 85 190 190s-85 190-190 190H372c-48 0-86-38-86-86V500z" fill="#17324d"/>
+  <path d="M392 470h140c73 0 132 59 132 132s-59 132-132 132H392c-17 0-30-13-30-30V500c0-17 13-30 30-30z" fill="url(#accent)"/>
+  <path d="M410 522h120c39 0 70 31 70 70s-31 70-70 70H410V522z" fill="#f4efe6"/>
+  <text x="278" y="672" fill="#17324d" font-family="PingFang SC, Microsoft YaHei, sans-serif" font-size="196" font-weight="700">R</text>
+  <text x="520" y="672" fill="#17324d" font-family="PingFang SC, Microsoft YaHei, sans-serif" font-size="196" font-weight="700">M</text>
+</svg>
