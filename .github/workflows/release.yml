@@ -8,6 +8,9 @@ on:
 permissions:
   contents: write
 
+env:
+  FORCE_JAVASCRIPT_ACTIONS_TO_NODE24: true
+
 jobs:
   package:
     name: Package (${{ matrix.label }})
@@ -42,17 +45,17 @@ jobs:
 
     steps:
       - name: Checkout
-        uses: actions/checkout@v4
+        uses: actions/checkout@v6
 
       - name: Setup Java 17
-        uses: actions/setup-java@v4
+        uses: actions/setup-java@v5
         with:
           distribution: temurin
           java-version: '17'
           cache: gradle
 
       - name: Setup Gradle
-        uses: gradle/actions/setup-gradle@v4
+        uses: gradle/actions/setup-gradle@v5
 
       - name: Install Linux packaging dependencies
         if: runner.os == 'Linux'
@@ -66,7 +69,7 @@ jobs:
         run: choco install wixtoolset --no-progress -y
 
       - name: Generate icons
-        if: runner.os != 'Windows'
+        if: runner.os == 'macOS'
         run: ./scripts/generate-icons.sh
 
       - name: Import Apple signing certificate
@@ -97,7 +100,7 @@ jobs:
         run: .\gradlew.bat --no-daemon clean test packageInstallerCurrentPlatform writeReleaseChecksums "-PreleaseVersion=$($env:GITHUB_REF_NAME.Substring(1))" "-PinstallerType=${{ matrix.installer_type }}"
 
       - name: Upload packaged artifacts
-        uses: actions/upload-artifact@v4
+        uses: actions/upload-artifact@v6
         with:
           name: ${{ matrix.label }}-artifacts
           path: |
@@ -111,10 +114,10 @@ jobs:
 
     steps:
       - name: Checkout
-        uses: actions/checkout@v4
+        uses: actions/checkout@v6
 
       - name: Download build artifacts
-        uses: actions/download-artifact@v4
+        uses: actions/download-artifact@v8
         with:
           path: dist
 
