@@ -12,6 +12,17 @@ jobs:
   package:
     name: Package (${{ matrix.label }})
     runs-on: ${{ matrix.os }}
+    env:
+      APPLE_CERTIFICATE_P12: ${{ secrets.APPLE_CERTIFICATE_P12 }}
+      APPLE_CERTIFICATE_PASSWORD: ${{ secrets.APPLE_CERTIFICATE_PASSWORD }}
+      BUILD_KEYCHAIN_PASSWORD: ${{ secrets.BUILD_KEYCHAIN_PASSWORD }}
+      REDISMANAGER_MAC_SIGN_IDENTITY: ${{ secrets.REDISMANAGER_MAC_SIGN_IDENTITY }}
+      REDISMANAGER_MAC_SIGN_KEYCHAIN: ${{ secrets.REDISMANAGER_MAC_SIGN_KEYCHAIN }}
+      APPLE_ID: ${{ secrets.APPLE_ID }}
+      TEAM_ID: ${{ secrets.TEAM_ID }}
+      APP_PASSWORD: ${{ secrets.APP_PASSWORD }}
+      APPLE_KEYCHAIN_PROFILE: ${{ secrets.APPLE_KEYCHAIN_PROFILE }}
+      NOTARIZE: ${{ secrets.APPLE_ID != '' || secrets.APPLE_KEYCHAIN_PROFILE != '' }}
     strategy:
       fail-fast: false
       matrix:
@@ -59,11 +70,7 @@ jobs:
         run: ./scripts/generate-icons.sh
 
       - name: Import Apple signing certificate
-        if: runner.os == 'macOS' && secrets.APPLE_CERTIFICATE_P12 != ''
-        env:
-          APPLE_CERTIFICATE_P12: ${{ secrets.APPLE_CERTIFICATE_P12 }}
-          APPLE_CERTIFICATE_PASSWORD: ${{ secrets.APPLE_CERTIFICATE_PASSWORD }}
-          BUILD_KEYCHAIN_PASSWORD: ${{ secrets.BUILD_KEYCHAIN_PASSWORD }}
+        if: runner.os == 'macOS' && env.APPLE_CERTIFICATE_P12 != ''
         run: |
           CERT_PATH="$RUNNER_TEMP/signing-cert.p12"
           KEYCHAIN_PATH="$RUNNER_TEMP/build-signing.keychain-db"
@@ -78,14 +85,6 @@ jobs:
 
       - name: Build macOS release
         if: runner.os == 'macOS'
-        env:
-          REDISMANAGER_MAC_SIGN_IDENTITY: ${{ secrets.REDISMANAGER_MAC_SIGN_IDENTITY }}
-          REDISMANAGER_MAC_SIGN_KEYCHAIN: ${{ env.REDISMANAGER_MAC_SIGN_KEYCHAIN || secrets.REDISMANAGER_MAC_SIGN_KEYCHAIN }}
-          APPLE_ID: ${{ secrets.APPLE_ID }}
-          TEAM_ID: ${{ secrets.TEAM_ID }}
-          APP_PASSWORD: ${{ secrets.APP_PASSWORD }}
-          APPLE_KEYCHAIN_PROFILE: ${{ secrets.APPLE_KEYCHAIN_PROFILE }}
-          NOTARIZE: ${{ secrets.APPLE_ID != '' || secrets.APPLE_KEYCHAIN_PROFILE != '' }}
         run: ./scripts/release-macos.sh "${GITHUB_REF_NAME#v}"
 
       - name: Build release on Unix
@@ -111,6 +110,9 @@ jobs:
     needs: package
 
     steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
       - name: Download build artifacts
         uses: actions/download-artifact@v4
         with:
